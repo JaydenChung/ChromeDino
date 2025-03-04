@@ -35,12 +35,13 @@ function startAIController() {
   // Set up obstacle detection - run less frequently to reduce CPU usage
   obstacleDetectionInterval = setInterval(detectObstacles, 50);
 
-  // Perform a safety jump every 2 seconds as a fallback
+  // Perform a safety jump every 1 second as a fallback
   gameInterval = setInterval(() => {
     if (!aiActive) return;
     console.log("Performing safety jump");
-    jump();
-  }, 2000);
+    // Force jump by bypassing the time check
+    forceJump();
+  }, 1000);
 
   // Add a status indicator to the page
   const statusDiv = document.createElement("div");
@@ -82,8 +83,8 @@ function stopAIController() {
   console.log("Stopped Chrome Dino AI Controller");
 }
 
-// Create a single canvas context to avoid multiple getContext calls
-let gameCtx = null;
+// Remove duplicate declaration
+// gameCtx is already declared at the top
 
 // Detect obstacles in the game
 function detectObstacles() {
@@ -185,7 +186,7 @@ function detectObstacles() {
   }
 }
 
-// Perform jump action
+// Function to perform jump with time check
 function jump() {
   if (!aiActive) return;
 
@@ -203,8 +204,16 @@ function jump() {
     return;
   }
 
+  // Call the actual jump implementation
+  forceJump();
+}
+
+// Function to force jump regardless of timing
+function forceJump() {
+  if (!aiActive) return;
+
   console.log("Jumping!");
-  lastJumpTime = now;
+  lastJumpTime = Date.now();
   consecutiveJumps++;
 
   // Update the status indicator with jump count
@@ -213,7 +222,9 @@ function jump() {
     statusDiv.textContent = `AI Active - Jumps: ${consecutiveJumps}`;
   }
 
-  // Send space key event to jump
+  // Try multiple methods to trigger a jump
+
+  // Method 1: Standard keyboard event
   document.dispatchEvent(
     new KeyboardEvent("keydown", {
       key: " ",
@@ -238,6 +249,33 @@ function jump() {
       }),
     );
   }, 30);
+
+  // Method 2: Try arrow up key as well
+  setTimeout(() => {
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowUp",
+        code: "ArrowUp",
+        keyCode: 38,
+        which: 38,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+
+    setTimeout(() => {
+      document.dispatchEvent(
+        new KeyboardEvent("keyup", {
+          key: "ArrowUp",
+          code: "ArrowUp",
+          keyCode: 38,
+          which: 38,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    }, 30);
+  }, 10);
 
   // As the game progresses, increase the game speed estimation
   // This helps adjust timing for faster obstacle approach
